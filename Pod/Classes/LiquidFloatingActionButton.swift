@@ -75,6 +75,7 @@ open class LiquidFloatingActionButton : UIView {
     fileprivate let circleLayer = CAShapeLayer()
     
     fileprivate var touching = false
+    fileprivate var moving = false//SV
 
     fileprivate var baseView = CircleLiquidBaseView()
     fileprivate let liquidView = UIView()
@@ -164,7 +165,7 @@ open class LiquidFloatingActionButton : UIView {
     fileprivate func drawCircle() {
         self.circleLayer.cornerRadius = self.frame.width * 0.5
         self.circleLayer.masksToBounds = true
-        if touching && responsible {
+        if touching && responsible && !moving {//SV
             self.circleLayer.backgroundColor = self.color.white(0.5).cgColor
         } else {
             self.circleLayer.backgroundColor = self.color.cgColor
@@ -177,22 +178,54 @@ open class LiquidFloatingActionButton : UIView {
         }
     }
     
+    open func handleButtonDragCompletion(touch : UITouch) {//SV
+    }
+    
     // MARK: Events
     open override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         self.touching = true
         setNeedsDisplay()
     }
     
-    open override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    open override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {//SV
         self.touching = false
-        setNeedsDisplay()
-        didTapped()
+        if self.moving {
+            self.moving = false
+            let touch : UITouch = touches.first!
+            drawCircle()
+            handleButtonDragCompletion(touch: touch)
+        } else {
+            setNeedsDisplay()
+            didTapped()
+        }
     }
     
     open override func touchesCancelled(_ touches: Set<UITouch>?, with event: UIEvent?) {
         self.touching = false
         setNeedsDisplay()
     }
+    
+    open override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {//SV
+        handleTouchMoved(touches: touches)
+    }
+    
+    fileprivate func handleTouchMoved(touches: Set<UITouch>) {//SV
+        
+        let touch : UITouch = touches.first!
+        let touchLocation = touch.location(in: self.superview)
+        
+        if abs(touchLocation.x - self.center.x) > 15 || self.moving {
+            if !self.moving {
+                self.moving = true
+                drawCircle()
+            }
+            if !isClosed {
+                close()
+            }
+            self.center.x = touchLocation.x
+        }
+    }
+
     
     open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         for cell in cellArray() {
@@ -268,7 +301,7 @@ class ActionBarBaseView : UIView {
 
 class CircleLiquidBaseView : ActionBarBaseView {
 
-    let openDuration: CGFloat  = 0.6
+    let openDuration: CGFloat  = 0.3//SV
     let closeDuration: CGFloat = 0.2
     let viscosity: CGFloat     = 0.65
     var animateStyle: LiquidFloatingActionButtonAnimateStyle = .up
