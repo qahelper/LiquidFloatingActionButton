@@ -9,8 +9,15 @@
 import Foundation
 import UIKit
 
-open class LiquittableCircle : UIView {
 
+public struct LiquittableCircleConstant {
+    static let selectedCellTag = 10001
+    static let normalCellTag = 0
+}
+
+open class LiquittableCircle : UIView {
+    
+    public var selectedCellColor: UIColor?
     var points: [CGPoint] = []
     var radius: CGFloat {
         didSet {
@@ -66,7 +73,12 @@ open class LiquittableCircle : UIView {
 
     func draw(_ path: UIBezierPath) -> CAShapeLayer {
         circleLayer.lineWidth = 3.0
-        circleLayer.fillColor = self.color.cgColor
+        //QAHElper
+        if self.tag == LiquittableCircleConstant.selectedCellTag, let selectedColor = selectedCellColor {
+            circleLayer.fillColor = selectedColor.cgColor
+        } else {
+            circleLayer.fillColor = self.color.cgColor
+        }
         circleLayer.path = path.cgPath
         return circleLayer
     }
@@ -78,5 +90,12 @@ open class LiquittableCircle : UIView {
     open override func draw(_ rect: CGRect) {
         drawCircle()
     }
-
+    
+    open func setSelected(isSelected: Bool) {
+        if isSelected {
+            self.tag = LiquittableCircleConstant.selectedCellTag
+        } else {
+            self.tag = LiquittableCircleConstant.normalCellTag
+        }
+    }
 }
